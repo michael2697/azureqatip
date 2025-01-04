@@ -15,84 +15,70 @@ pipeline {
         }
         stage('Install Terraform') {
             steps {
-                node {
-                    sh '''
-                    if ! command -v terraform &> /dev/null; then
-                        echo "Terraform not found. Installing..."
-                        curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip
-                        unzip -o terraform.zip
-                        sudo mv terraform /usr/local/bin/
-                    else
-                        echo "Terraform already installed."
-                    fi
-                    terraform --version
-                    '''
-                }
+                sh '''
+                if ! command -v terraform &> /dev/null; then
+                    echo "Terraform not found. Installing..."
+                    curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip
+                    unzip -o terraform.zip
+                    sudo mv terraform /usr/local/bin/
+                else
+                    echo "Terraform already installed."
+                fi
+                terraform --version
+                '''
             }
         }
         stage('Azure Login') {
             steps {
-                node {
-                    sh '''
-                    echo "Logging in to Azure CLI..."
-                    az login --service-principal \
-                        --username $ARM_CLIENT_ID \
-                        --password $ARM_CLIENT_SECRET \
-                        --tenant $ARM_TENANT_ID
-                    az account set --subscription $ARM_SUBSCRIPTION_ID
-                    '''
-                }
+                sh '''
+                echo "Logging in to Azure CLI..."
+                az login --service-principal \
+                    --username $ARM_CLIENT_ID \
+                    --password $ARM_CLIENT_SECRET \
+                    --tenant $ARM_TENANT_ID
+                az account set --subscription $ARM_SUBSCRIPTION_ID
+                '''
             }
         }
         stage('Terraform Init') {
             steps {
-                node {
-                    sh '''
-                    echo "Initializing Terraform..."
-                    terraform init -reconfigure
-                    '''
-                }
+                sh '''
+                echo "Initializing Terraform..."
+                terraform init -reconfigure
+                '''
             }
         }
         stage('Validate Terraform') {
             steps {
-                node {
-                    sh '''
-                    echo "Validating Terraform..."
-                    terraform validate
-                    '''
-                }
+                sh '''
+                echo "Validating Terraform..."
+                terraform validate
+                '''
             }
         }
         stage('Terraform Plan') {
             steps {
-                node {
-                    sh '''
-                    echo "Generating Terraform plan..."
-                    terraform plan -out=tfplan
-                    '''
-                }
+                sh '''
+                echo "Generating Terraform plan..."
+                terraform plan -out=tfplan
+                '''
             }
         }
         stage('Terraform Apply') {
             steps {
-                node {
-                    sh '''
-                    echo "Applying Terraform configuration..."
-                    terraform apply -auto-approve tfplan
-                    '''
-                }
+                sh '''
+                echo "Applying Terraform configuration..."
+                terraform apply -auto-approve tfplan
+                '''
             }
         }
     }
     post {
         always {
-            node {
-                echo "Archiving logs and cleaning workspace..."
-                archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
-                archiveArtifacts artifacts: 'tfplan', allowEmptyArchive: true
-                cleanWs()
-            }
+            echo "Archiving logs and cleaning workspace..."
+            archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'tfplan', allowEmptyArchive: true
+            cleanWs()
         }
         success {
             echo 'Resources created successfully!'
