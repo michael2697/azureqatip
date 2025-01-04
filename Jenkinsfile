@@ -75,10 +75,12 @@ pipeline {
     }
     post {
         always {
-            echo "Archiving logs and cleaning workspace..."
-            archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'tfplan', allowEmptyArchive: true
-            cleanWs()
+            node {
+                echo "Archiving logs and cleaning workspace..."
+                archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'tfplan', allowEmptyArchive: true
+                cleanWs()
+            }
         }
         success {
             echo 'Resources created successfully!'
