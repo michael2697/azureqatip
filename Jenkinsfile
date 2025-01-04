@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: ''
+                git branch: 'main', url: 'https://github.com/michael2697/azureqatip.git'
             }
         }
         stage('Install Terraform') {
